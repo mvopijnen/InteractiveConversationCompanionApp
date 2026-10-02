@@ -41,6 +41,7 @@ body {
   font-family: 'Instrument Sans', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   margin: 0;
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 4px 4px 0px;
 }
 
 ::-webkit-scrollbar { display: none; }
