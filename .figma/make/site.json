@@ -1,0 +1,10 @@
+{
+  "description": "Facilitates deep, meaningful conversations between two people through guided self-disclosure, fostering connection with a warm, seamless interface.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
