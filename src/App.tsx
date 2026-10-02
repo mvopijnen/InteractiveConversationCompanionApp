@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
-import { buildSession, getFavorites, toggleFavorite } from './data/engine'
-import { buildLibrarySession, buildNextRound, hasApprovedContent, resetSessionState, markCardSeen } from './data/library-engine'
+import { buildSession, getFavorites, toggleFavorite } from './engine'
+import { buildLibrarySession, buildNextRound, hasApprovedContent, resetSessionState, markCardSeen } from './library-engine'
 import {
   type DateFaseKey, type SfeerKey, type Tijdsduur, type Question, type QType,
-} from './data/questions'
+} from './questions'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const B   = '#9E3568'                        // berry primary
