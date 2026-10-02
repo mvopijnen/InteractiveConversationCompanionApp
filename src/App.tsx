@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { buildSession, getFavorites, toggleFavorite } from './data/engine'
-import { buildLibrarySession, buildNextRound, hasApprovedContent, resetSessionState } from './data/library-engine'
+import { buildLibrarySession, buildNextRound, hasApprovedContent, resetSessionState, markCardSeen } from './data/library-engine'
 import {
   type DateFaseKey, type SfeerKey, type Tijdsduur, type Question, type QType,
 } from './data/questions'
@@ -718,7 +718,12 @@ function SessionScreen({
   const [cardKey, setCardKey] = useState(0)
   const [favIds, setFavIds]   = useState<Set<string>>(() => new Set(getFavorites()))
 
-  const q         = questions[index]
+  const q = questions[index]
+
+  // Mark card as seen by pair/user when it is actually displayed (library engine only)
+  useEffect(() => {
+    if (fase === 'eerste' && q) markCardSeen(q.id)
+  }, [q?.id, fase])
   const progress  = (index + 1) / questions.length
   const typeLabel = TYPE_LABELS[q.type]
   const isFav     = favIds.has(q.id)
