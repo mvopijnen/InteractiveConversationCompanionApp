@@ -22,9 +22,9 @@ export type ItemType = 'question' | 'dilemma' | 'interactive' | 'perspective' | 
 export type Subtype =
   | 'light_opener'
   | 'scenario'
-  | 'dilemma'
+  | 'forced_choice'
   | 'personal_safe'
-  | 'interactive_task'
+  | 'micro_interaction'
   | 'perspective_taking'
   | 'closing'
 
@@ -87,9 +87,9 @@ export const SFEER_TO_PRIMARY_SPHERE: Record<SfeerKey, PrimarySphere> = {
 export const SUBTYPE_TO_QTYPE: Record<Subtype, QType> = {
   light_opener:       'opener',
   scenario:           'scenario',
-  dilemma:            'dilemma',
+  forced_choice:      'dilemma',
   personal_safe:      'persoonlijk',
-  interactive_task:   'interactief',
+  micro_interaction:  'interactief',
   perspective_taking: 'perspective',
   closing:            'afsluiter',
 }
@@ -119,9 +119,9 @@ export const CTYPE_TO_QTYPE = SUBTYPE_TO_QTYPE
 
 export const SLOT_CRITERIA: Record<ContentTypeCode, SlotCriteria> = {
   OPEN:  { subtypes: ['light_opener'],       idealPositions: ['opening', 'early'] },
-  DIL:   { subtypes: ['dilemma'],            idealPositions: ['early', 'middle', 'late'] },
+  DIL:   { subtypes: ['forced_choice'],      idealPositions: ['early', 'middle', 'late'] },
   SCEN:  { subtypes: ['scenario'],           idealPositions: ['early', 'middle'] },
-  INT:   { subtypes: ['interactive_task'],    idealPositions: ['middle', 'late'] },
+  INT:   { subtypes: ['micro_interaction'],  idealPositions: ['middle', 'late'] },
   SAFE:  { subtypes: ['personal_safe'],      idealPositions: ['middle', 'late'] },
   PERS:  { subtypes: ['perspective_taking'], idealPositions: ['middle', 'late'] },
   CLOSE: { subtypes: ['closing'],            idealPositions: ['closing'] },
@@ -178,8 +178,11 @@ export const EERSTE_ONTMOETING_CONFIG: LibraryConfig = {
   },
 }
 
-// ── Data placeholder ──────────────────────────────────────────────────────────
-// Replace this array with the items from the approved JSON.
-// No field renaming or value changes needed — the schema matches exactly.
+// ── Approved content library ──────────────────────────────────────────────────
+// Source of truth: tussen_ons_eerste_ontmoeting_2_0_200_approved.json
+// DO NOT modify the JSON. DO NOT generate or rewrite content here.
 
-export const EERSTE_ONTMOETING_ITEMS: LibraryItem[] = []
+import rawLibrary from './tussen_ons_eerste_ontmoeting_2_0_200_approved.json'
+
+export const EERSTE_ONTMOETING_ITEMS: LibraryItem[] =
+  (rawLibrary as { items: LibraryItem[] }).items
