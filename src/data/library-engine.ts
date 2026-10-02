@@ -10,11 +10,11 @@
 //
 // Content governance: this engine NEVER generates or rewrites content.
 
-import type { SfeerKey, Tijdsduur, Question } from './questions'
+import type { SfeerKey, Tijdsduur, Question, DateFaseKey } from './questions'
 import {
   type LibraryItem, type ContentTypeCode, type DurationKey,
   type PrimarySphere, type Intensity, type SessionPosition,
-  EERSTE_ONTMOETING_ITEMS, EERSTE_ONTMOETING_CONFIG,
+  EERSTE_ONTMOETING_ITEMS, EEN_PAAR_DATES_ITEMS, EERSTE_ONTMOETING_CONFIG,
   SFEER_TO_PRIMARY_SPHERE, SUBTYPE_TO_QTYPE, INTENSITY_TO_PHASE,
   SLOT_CRITERIA,
 } from './library'
@@ -30,12 +30,13 @@ const SESS_STATE_KEY = 'to2_em_session'       // sessionStorage — clears on ta
 // Used to prevent repeat_groups and topics from repeating within a session.
 
 interface SessionState {
-  selected_ids:         string[]    // all IDs selected this session (shown or not)
-  seen_repeat_groups:   string[]    // repeat_groups selected this session
-  seen_topics:          string[]    // topics selected this session
-  last_energy:          string      // energy of last selected item (for spread)
-  intensity_history:    Intensity[] // ordered intensity of selected items
-  round:                number      // current round index (for unlimited rotation)
+  selected_ids:         string[]      // all IDs selected this session (shown or not)
+  seen_repeat_groups:   string[]      // repeat_groups selected this session
+  seen_topics:          string[]      // topics selected this session
+  last_energy:          string        // energy of last selected item (for spread)
+  intensity_history:    Intensity[]   // ordered intensity of selected items
+  round:                number        // current round index (for unlimited rotation)
+  fase:                 DateFaseKey   // stored so buildNextRound uses the correct library
 }
 
 function emptySessionState(): SessionState {
@@ -46,6 +47,7 @@ function emptySessionState(): SessionState {
     last_energy:        '',
     intensity_history:  [],
     round:              0,
+    fase:               'eerste',
   }
 }
 
@@ -92,14 +94,19 @@ export function markCardSeen(id: string) {
   } catch {}
 }
 
-// ── Approved content pool ─────────────────────────────────────────────────────
+// ── Approved content pool — per datefase ──────────────────────────────────────
 
-function approved(): LibraryItem[] {
-  return EERSTE_ONTMOETING_ITEMS.filter(i => i.quality_status === 'approved' && i.active)
+function itemsForFase(fase: DateFaseKey): LibraryItem[] {
+  if (fase === 'paar_dates') return EEN_PAAR_DATES_ITEMS
+  return EERSTE_ONTMOETING_ITEMS   // 'eerste' and any other future fase using this engine
 }
 
-export function hasApprovedContent(): boolean {
-  return approved().length > 0
+function approved(fase: DateFaseKey): LibraryItem[] {
+  return itemsForFase(fase).filter(i => i.quality_status === 'approved' && i.active)
+}
+
+export function hasApprovedContent(fase: DateFaseKey = 'eerste'): boolean {
+  return approved(fase).length > 0
 }
 
 // ── Duration key helper ───────────────────────────────────────────────────────
@@ -210,11 +217,13 @@ function pickSlot(
   userSeen: Set<string>,
   slotIndex: number,
   totalSlots: number,
+  fase: DateFaseKey,
 ): LibraryItem | null {
   const { subtypes } = SLOT_CRITERIA[slotCode]
 
   // Step 1: hard filters — duration_fit, subtype, not-already-used
-  const base = approved().filter(i =>
+  // approved() scopes to the correct dating_stage library for this fase
+  const base = approved(fase).filter(i =>
     i.duration_fit.includes(durationKey) &&
     subtypes.includes(i.subtype) &&
     !excludeIds.has(i.id) &&
@@ -262,6 +271,7 @@ function runBlueprint(
   durationKey: DurationKey,
   sphere: PrimarySphere,
   state: SessionState,
+  fase: DateFaseKey,
 ): { questions: Question[]; nextState: SessionState } {
   const pairSeen      = getPairSeen()
   const userSeen      = getUserSeen()
@@ -277,7 +287,7 @@ function runBlueprint(
       slotCode, durationKey, sphere,
       excludeIds, roundGroups,
       state, pairSeen, userSeen,
-      i, totalSlots,
+      i, totalSlots, fase,
     )
 
     if (item) {
@@ -311,6 +321,7 @@ function runBlueprint(
       ...picked.map(i => i.intensity),
     ],
     round: state.round + 1,
+    fase,
   }
 
   return { questions: picked.map(toQuestion), nextState }
@@ -325,11 +336,11 @@ function chooseBlueprint(blueprints: ContentTypeCode[][], round: number): Conten
 // ── Public API ────────────────────────────────────────────────────────────────
 
 /**
- * Build the session for the chosen sfeer and tijdsduur.
+ * Build the session for the chosen fase, sfeer and tijdsduur.
  * Does NOT mark any items as seen — call markCardSeen(id) from the UI.
  */
-export function buildLibrarySession(sfeer: SfeerKey, tijdsduur: Tijdsduur): Question[] {
-  if (!hasApprovedContent()) return []
+export function buildLibrarySession(fase: DateFaseKey, sfeer: SfeerKey, tijdsduur: Tijdsduur): Question[] {
+  if (!hasApprovedContent(fase)) return []
 
   const sphere      = SFEER_TO_PRIMARY_SPHERE[sfeer]
   const durationKey = toDurationKey(tijdsduur)
@@ -347,24 +358,27 @@ export function buildLibrarySession(sfeer: SfeerKey, tijdsduur: Tijdsduur): Ques
     blueprint = chooseBlueprint(config.blueprints.unlimited_rounds, state.round)
   }
 
-  const { questions, nextState } = runBlueprint(blueprint, durationKey, sphere, state)
+  const { questions, nextState } = runBlueprint(blueprint, durationKey, sphere, state, fase)
   saveSessionState(nextState)
   return questions
 }
 
 /**
  * Build the next unlimited round after a natural stop point.
+ * Uses the fase stored in session state to guarantee the same library is used.
  * Does NOT mark any items as seen — call markCardSeen(id) from the UI.
  */
 export function buildNextRound(sfeer: SfeerKey): Question[] {
-  if (!hasApprovedContent()) return []
+  const state = getSessionState()
+  const fase  = state.fase
 
-  const sphere   = SFEER_TO_PRIMARY_SPHERE[sfeer]
-  const state    = getSessionState()
-  const config   = EERSTE_ONTMOETING_CONFIG
+  if (!hasApprovedContent(fase)) return []
+
+  const sphere    = SFEER_TO_PRIMARY_SPHERE[sfeer]
+  const config    = EERSTE_ONTMOETING_CONFIG
   const blueprint = chooseBlueprint(config.blueprints.unlimited_rounds, state.round)
 
-  const { questions, nextState } = runBlueprint(blueprint, 'unlimited', sphere, state)
+  const { questions, nextState } = runBlueprint(blueprint, 'unlimited', sphere, state, fase)
   saveSessionState(nextState)
   return questions
 }

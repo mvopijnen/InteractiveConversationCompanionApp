@@ -708,7 +708,7 @@ function SessionScreen({
   tijdsduur: Tijdsduur
   onEinde: () => void
 }) {
-  const isUnlimited = tijdsduur === 'onbeperkt' && fase === 'eerste'
+  const isUnlimited = tijdsduur === 'onbeperkt' && (fase === 'eerste' || fase === 'paar_dates')
 
   const [questions, setQuestions] = useState(initialQuestions)
   const [roundNumber, setRoundNumber] = useState(1)
@@ -722,7 +722,7 @@ function SessionScreen({
 
   // Mark card as seen by pair/user when it is actually displayed (library engine only)
   useEffect(() => {
-    if (fase === 'eerste' && q) markCardSeen(q.id)
+    if ((fase === 'eerste' || fase === 'paar_dates') && q) markCardSeen(q.id)
   }, [q?.id, fase])
   const progress  = (index + 1) / questions.length
   const typeLabel = TYPE_LABELS[q.type]
@@ -908,8 +908,9 @@ export default function App() {
   function startSessie(f: DateFaseKey, s: SfeerKey, t: Tijdsduur) {
     resetSessionState()
     // Eerste ontmoeting fase uses the curated library engine when content is available
-    const qs = (f === 'eerste' && hasApprovedContent())
-      ? buildLibrarySession(s, t)
+    const usesLibrary = (f === 'eerste' || f === 'paar_dates') && hasApprovedContent(f)
+    const qs = usesLibrary
+      ? buildLibrarySession(f, s, t)
       : buildSession(f, s, t)
     setSession(qs)
     setTijdsduur(t)
