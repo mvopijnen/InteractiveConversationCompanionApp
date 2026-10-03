@@ -40,7 +40,7 @@ export interface LibraryItem {
   id: string
   content_version: number
   quality_status: QualityStatus
-  dating_stage: 'first_meeting' | 'few_dates'
+  dating_stage: 'first_meeting' | 'few_dates' | 'dating_for_a_while'
   primary_sphere: PrimarySphere
   compatible_spheres: string[]
   type: ItemType
@@ -183,9 +183,13 @@ export const EERSTE_ONTMOETING_CONFIG: LibraryConfig = {
 
 import rawEerste from './tussen_ons_eerste_ontmoeting_2_0_200_approved.json'
 import rawPaarDates from './tussen_ons_een_paar_dates_2_0_200_approved_normalized.json'
+import rawWeDatenAlEven from './tussen_ons_we_daten_al_even_2_0_200_approved_normalized.json'
 
 export const EERSTE_ONTMOETING_ITEMS: LibraryItem[] =
   (rawEerste as { items: LibraryItem[] }).items
 
 export const EEN_PAAR_DATES_ITEMS: LibraryItem[] =
   (rawPaarDates as { items: LibraryItem[] }).items
+
+export const WE_DATEN_AL_EVEN_ITEMS: LibraryItem[] =
+  (rawWeDatenAlEven as { items: LibraryItem[] }).items

@@ -14,7 +14,7 @@ import type { SfeerKey, Tijdsduur, Question, DateFaseKey } from './questions'
 import {
   type LibraryItem, type ContentTypeCode, type DurationKey,
   type PrimarySphere, type Intensity, type SessionPosition,
-  EERSTE_ONTMOETING_ITEMS, EEN_PAAR_DATES_ITEMS, EERSTE_ONTMOETING_CONFIG,
+  EERSTE_ONTMOETING_ITEMS, EEN_PAAR_DATES_ITEMS, WE_DATEN_AL_EVEN_ITEMS, EERSTE_ONTMOETING_CONFIG,
   SFEER_TO_PRIMARY_SPHERE, SUBTYPE_TO_QTYPE, INTENSITY_TO_PHASE,
   SLOT_CRITERIA,
 } from './library'
@@ -98,7 +98,8 @@ export function markCardSeen(id: string) {
 
 function itemsForFase(fase: DateFaseKey): LibraryItem[] {
   if (fase === 'paar_dates') return EEN_PAAR_DATES_ITEMS
-  return EERSTE_ONTMOETING_ITEMS   // 'eerste' and any other future fase using this engine
+  if (fase === 'al_even')    return WE_DATEN_AL_EVEN_ITEMS
+  return EERSTE_ONTMOETING_ITEMS
 }
 
 function approved(fase: DateFaseKey): LibraryItem[] {
